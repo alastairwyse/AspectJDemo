@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<AspectJDemoConfiguration>
+  <MetricLogFilePath>C:\Temp\SenderMetrics.txt</MetricLogFilePath>
+  <MetricEventWriteFrequency>3000</MetricEventWriteFrequency>
+</AspectJDemoConfiguration>
