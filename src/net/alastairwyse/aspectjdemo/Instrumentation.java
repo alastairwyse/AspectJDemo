@@ -29,7 +29,7 @@ import net.alastairwyse.methodinvocationremotingmetrics.*;
  * Aspect which provides an example of instrumentation/metric logging for class TcpRemoteSender
  * @author Alastair Wyse
  */
-aspect Instrumentation implements AutoCloseable {
+aspect Instrumentation {
     
     private final String configurationFileName = "ApectJDemoConfiguration.xml";
     
@@ -55,6 +55,12 @@ aspect Instrumentation implements AutoCloseable {
         call (void TcpRemoteSender.AttemptConnect()) && withincode (void TcpRemoteSender.HandleExceptionAndResend(Exception, String));
     
     /**
+     * Defines a join point for when the close() method is called.
+     */
+    private pointcut Close():
+        call (void TcpRemoteSender.close());
+    
+    /**
      * Implements metric logging before sending a message.
      */
     before(): SendMessage() {
@@ -74,6 +80,19 @@ aspect Instrumentation implements AutoCloseable {
      */
     after() returning: Reconnect() {
         metricLogger.Increment(new TcpRemoteSenderReconnected());
+        }
+    
+    /**
+     * Cleans up aspect resources after the target object is closed
+     */
+    after() : Close() {
+        try {
+            metricLogger.Stop();
+            metricLogger.close();
+        }
+        catch (Exception e){
+            e.printStackTrace(System.out);
+        }
         }
     
     /**
@@ -120,25 +139,6 @@ aspect Instrumentation implements AutoCloseable {
         }
         
         return new ConfigurationSettings(metricLogFilePath, 3000);
-    }
-    
-    @Override
-    public void close() throws IOException, Exception {
-        metricLogger.Stop();
-        metricLogger.close();
-    }
-    
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            close();
-        }
-        catch (Exception e) {
-            throw e;
-        }
-        finally {
-            super.finalize();
-        }
     }
     
     /**
